@@ -35,18 +35,27 @@ let extras = [
 let children_regexps : (string * Run.exp option) list = [
   "raw_text", None;
   "attribute_name", None;
-  "start_tag_name", None;
+  "semgrep_metavariable", None;
   "doctype", None;
+  "text", None;
   "pat_58fbb2e", None;
   "pat_98d585a", None;
-  "text", None;
-  "style_start_tag_name", None;
+  "start_tag_name", None;
   "erroneous_end_tag_name", None;
   "implicit_end_tag", None;
   "pat_03aa317", None;
   "end_tag_name", None;
+  "style_start_tag_name", None;
   "attribute_value", None;
   "script_start_tag_name", None;
+  "semgrep_end_tag",
+  Some (
+    Seq [
+      Token (Literal "</");
+      Token (Name "semgrep_metavariable");
+      Token (Literal ">");
+    ];
+  );
   "quoted_attribute_value",
   Some (
     Alt [|
@@ -106,17 +115,6 @@ let children_regexps : (string * Run.exp option) list = [
       );
     ];
   );
-  "start_tag",
-  Some (
-    Seq [
-      Token (Literal "<");
-      Token (Name "start_tag_name");
-      Repeat (
-        Token (Name "attribute");
-      );
-      Token (Literal ">");
-    ];
-  );
   "script_start_tag",
   Some (
     Seq [
@@ -137,6 +135,28 @@ let children_regexps : (string * Run.exp option) list = [
         Token (Name "attribute");
       );
       Token (Literal ">");
+    ];
+  );
+  "start_tag",
+  Some (
+    Seq [
+      Token (Literal "<");
+      Token (Name "start_tag_name");
+      Repeat (
+        Token (Name "attribute");
+      );
+      Token (Literal ">");
+    ];
+  );
+  "semgrep_start_tag",
+  Some (
+    Seq [
+      Token (Literal "<");
+      Token (Name "semgrep_metavariable");
+      Repeat (
+        Token (Name "attribute");
+      );
+      Token (Literal "/>");
     ];
   );
   "self_closing_tag",
@@ -173,6 +193,7 @@ let children_regexps : (string * Run.exp option) list = [
   "element",
   Some (
     Alt [|
+      Token (Name "semgrep_element");
       Seq [
         Token (Name "start_tag");
         Repeat (
@@ -197,6 +218,16 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Name "erroneous_end_tag");
     |];
   );
+  "semgrep_element",
+  Some (
+    Seq [
+      Token (Name "semgrep_start_tag");
+      Repeat (
+        Token (Name "node");
+      );
+      Token (Name "semgrep_end_tag");
+    ];
+  );
   "fragment",
   Some (
     Repeat (
@@ -215,12 +246,17 @@ let trans_attribute_name ((kind, body) : mt) : CST.attribute_name =
   | Leaf v -> v
   | Children _ -> assert false
 
-let trans_start_tag_name ((kind, body) : mt) : CST.start_tag_name =
+let trans_semgrep_metavariable ((kind, body) : mt) : CST.semgrep_metavariable =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
 
 let trans_doctype ((kind, body) : mt) : CST.doctype =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_text ((kind, body) : mt) : CST.text =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
@@ -236,12 +272,7 @@ let trans_pat_98d585a ((kind, body) : mt) : CST.pat_98d585a =
   | Leaf v -> v
   | Children _ -> assert false
 
-let trans_text ((kind, body) : mt) : CST.text =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_style_start_tag_name ((kind, body) : mt) : CST.style_start_tag_name =
+let trans_start_tag_name ((kind, body) : mt) : CST.start_tag_name =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
@@ -266,6 +297,11 @@ let trans_end_tag_name ((kind, body) : mt) : CST.end_tag_name =
   | Leaf v -> v
   | Children _ -> assert false
 
+let trans_style_start_tag_name ((kind, body) : mt) : CST.style_start_tag_name =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
 let trans_attribute_value ((kind, body) : mt) : CST.attribute_value =
   match body with
   | Leaf v -> v
@@ -275,6 +311,20 @@ let trans_script_start_tag_name ((kind, body) : mt) : CST.script_start_tag_name 
   match body with
   | Leaf v -> v
   | Children _ -> assert false
+
+let trans_semgrep_end_tag ((kind, body) : mt) : CST.semgrep_end_tag =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_semgrep_metavariable (Run.matcher_token v1),
+            Run.trans_token (Run.matcher_token v2)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
 
 let trans_quoted_attribute_value ((kind, body) : mt) : CST.quoted_attribute_value =
   match body with
@@ -391,24 +441,6 @@ let trans_attribute ((kind, body) : mt) : CST.attribute =
       )
   | Leaf _ -> assert false
 
-let trans_start_tag ((kind, body) : mt) : CST.start_tag =
-  match body with
-  | Children v ->
-      (match v with
-      | Seq [v0; v1; v2; v3] ->
-          (
-            Run.trans_token (Run.matcher_token v0),
-            trans_start_tag_name (Run.matcher_token v1),
-            Run.repeat
-              (fun v -> trans_attribute (Run.matcher_token v))
-              v2
-            ,
-            Run.trans_token (Run.matcher_token v3)
-          )
-      | _ -> assert false
-      )
-  | Leaf _ -> assert false
-
 let trans_script_start_tag ((kind, body) : mt) : CST.script_start_tag =
   match body with
   | Children v ->
@@ -435,6 +467,42 @@ let trans_style_start_tag ((kind, body) : mt) : CST.style_start_tag =
           (
             Run.trans_token (Run.matcher_token v0),
             trans_style_start_tag_name (Run.matcher_token v1),
+            Run.repeat
+              (fun v -> trans_attribute (Run.matcher_token v))
+              v2
+            ,
+            Run.trans_token (Run.matcher_token v3)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+let trans_start_tag ((kind, body) : mt) : CST.start_tag =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2; v3] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_start_tag_name (Run.matcher_token v1),
+            Run.repeat
+              (fun v -> trans_attribute (Run.matcher_token v))
+              v2
+            ,
+            Run.trans_token (Run.matcher_token v3)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+let trans_semgrep_start_tag ((kind, body) : mt) : CST.semgrep_start_tag =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2; v3] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_semgrep_metavariable (Run.matcher_token v1),
             Run.repeat
               (fun v -> trans_attribute (Run.matcher_token v))
               v2
@@ -502,6 +570,10 @@ let rec trans_element ((kind, body) : mt) : CST.element =
   | Children v ->
       (match v with
       | Alt (0, v) ->
+          `Semg_elem (
+            trans_semgrep_element (Run.matcher_token v)
+          )
+      | Alt (1, v) ->
           `Start_tag_rep_node_choice_end_tag (
             (match v with
             | Seq [v0; v1; v2] ->
@@ -526,7 +598,7 @@ let rec trans_element ((kind, body) : mt) : CST.element =
             | _ -> assert false
             )
           )
-      | Alt (1, v) ->
+      | Alt (2, v) ->
           `Self_clos_tag (
             trans_self_closing_tag (Run.matcher_token v)
           )
@@ -561,6 +633,23 @@ and trans_node ((kind, body) : mt) : CST.node =
       | Alt (5, v) ->
           `Errons_end_tag (
             trans_erroneous_end_tag (Run.matcher_token v)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+and trans_semgrep_element ((kind, body) : mt) : CST.semgrep_element =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2] ->
+          (
+            trans_semgrep_start_tag (Run.matcher_token v0),
+            Run.repeat
+              (fun v -> trans_node (Run.matcher_token v))
+              v1
+            ,
+            trans_semgrep_end_tag (Run.matcher_token v2)
           )
       | _ -> assert false
       )

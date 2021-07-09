@@ -8,7 +8,7 @@
 open! Sexplib.Conv
 open Tree_sitter_run
 
-type start_tag_name = Token.t
+type semgrep_metavariable = Token.t
 [@@deriving sexp_of]
 
 type script_start_tag_name = Token.t
@@ -20,6 +20,9 @@ type attribute_name = Token.t (* pattern "[^<>\"'/=\\s]+" *)
 type style_start_tag_name = Token.t
 [@@deriving sexp_of]
 
+type start_tag_name = Token.t
+[@@deriving sexp_of]
+
 type doctype = Token.t (* pattern [Dd][Oo][Cc][Tt][Yy][Pp][Ee] *)
 [@@deriving sexp_of]
 
@@ -27,9 +30,6 @@ type raw_text = Token.t
 [@@deriving sexp_of]
 
 type pat_98d585a = Token.t (* pattern "[^\"]+" *)
-[@@deriving sexp_of]
-
-type text = Token.t (* pattern [^<>]+ *)
 [@@deriving sexp_of]
 
 type erroneous_end_tag_name = Token.t
@@ -47,7 +47,15 @@ type pat_58fbb2e = Token.t (* pattern "[^']+" *)
 type end_tag_name = Token.t
 [@@deriving sexp_of]
 
+type text = Token.t (* pattern [^<>]+ *)
+[@@deriving sexp_of]
+
 type attribute_value = Token.t (* pattern "[^<>\"'=\\s]+" *)
+[@@deriving sexp_of]
+
+type semgrep_end_tag = (
+    Token.t (* "</" *) * semgrep_metavariable (*tok*) * Token.t (* ">" *)
+)
 [@@deriving sexp_of]
 
 type quoted_attribute_value = [
@@ -90,11 +98,11 @@ type script_start_tag = (
 )
 [@@deriving sexp_of]
 
-type style_start_tag = (
+type semgrep_start_tag = (
     Token.t (* "<" *)
-  * style_start_tag_name (*tok*)
+  * semgrep_metavariable (*tok*)
   * attribute list (* zero or more *)
-  * Token.t (* ">" *)
+  * Token.t (* "/>" *)
 )
 [@@deriving sexp_of]
 
@@ -106,8 +114,17 @@ type start_tag = (
 )
 [@@deriving sexp_of]
 
+type style_start_tag = (
+    Token.t (* "<" *)
+  * style_start_tag_name (*tok*)
+  * attribute list (* zero or more *)
+  * Token.t (* ">" *)
+)
+[@@deriving sexp_of]
+
 type element = [
-    `Start_tag_rep_node_choice_end_tag of (
+    `Semg_elem of (semgrep_start_tag * fragment * semgrep_end_tag)
+  | `Start_tag_rep_node_choice_end_tag of (
         start_tag
       * fragment
       * [ `End_tag of end_tag | `Impl_end_tag of implicit_end_tag (*tok*) ]
@@ -171,6 +188,11 @@ type style_element (* inlined *) = (
     style_start_tag
   * raw_text (*tok*) option
   * end_tag
+)
+[@@deriving sexp_of]
+
+type semgrep_element (* inlined *) = (
+    semgrep_start_tag * fragment * semgrep_end_tag
 )
 [@@deriving sexp_of]
 

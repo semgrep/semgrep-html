@@ -20,8 +20,8 @@ let blank (env : env) () =
 let todo (env : env) _ =
    failwith "not implemented"
 
-let map_start_tag_name (env : env) (tok : CST.start_tag_name) =
-  token env tok (* start_tag_name *)
+let map_semgrep_metavariable (env : env) (tok : CST.semgrep_metavariable) =
+  token env tok (* semgrep_metavariable *)
 
 let map_script_start_tag_name (env : env) (tok : CST.script_start_tag_name) =
   token env tok (* script_start_tag_name *)
@@ -32,6 +32,9 @@ let map_attribute_name (env : env) (tok : CST.attribute_name) =
 let map_style_start_tag_name (env : env) (tok : CST.style_start_tag_name) =
   token env tok (* style_start_tag_name *)
 
+let map_start_tag_name (env : env) (tok : CST.start_tag_name) =
+  token env tok (* start_tag_name *)
+
 let map_doctype (env : env) (tok : CST.doctype) =
   token env tok (* pattern [Dd][Oo][Cc][Tt][Yy][Pp][Ee] *)
 
@@ -40,9 +43,6 @@ let map_raw_text (env : env) (tok : CST.raw_text) =
 
 let map_pat_98d585a (env : env) (tok : CST.pat_98d585a) =
   token env tok (* pattern "[^\"]+" *)
-
-let map_text (env : env) (tok : CST.text) =
-  token env tok (* pattern [^<>]+ *)
 
 let map_erroneous_end_tag_name (env : env) (tok : CST.erroneous_end_tag_name) =
   token env tok (* erroneous_end_tag_name *)
@@ -59,8 +59,17 @@ let map_pat_58fbb2e (env : env) (tok : CST.pat_58fbb2e) =
 let map_end_tag_name (env : env) (tok : CST.end_tag_name) =
   token env tok (* end_tag_name *)
 
+let map_text (env : env) (tok : CST.text) =
+  token env tok (* pattern [^<>]+ *)
+
 let map_attribute_value (env : env) (tok : CST.attribute_value) =
   token env tok (* pattern "[^<>\"'=\\s]+" *)
+
+let map_semgrep_end_tag (env : env) ((v1, v2, v3) : CST.semgrep_end_tag) =
+  let v1 = token env v1 (* "</" *) in
+  let v2 = token env v2 (* semgrep_metavariable *) in
+  let v3 = token env v3 (* ">" *) in
+  todo env (v1, v2, v3)
 
 let map_quoted_attribute_value (env : env) (x : CST.quoted_attribute_value) =
   (match x with
@@ -115,11 +124,11 @@ let map_script_start_tag (env : env) ((v1, v2, v3, v4) : CST.script_start_tag) =
   let v4 = token env v4 (* ">" *) in
   todo env (v1, v2, v3, v4)
 
-let map_style_start_tag (env : env) ((v1, v2, v3, v4) : CST.style_start_tag) =
+let map_semgrep_start_tag (env : env) ((v1, v2, v3, v4) : CST.semgrep_start_tag) =
   let v1 = token env v1 (* "<" *) in
-  let v2 = token env v2 (* style_start_tag_name *) in
+  let v2 = token env v2 (* semgrep_metavariable *) in
   let v3 = List.map (map_attribute env) v3 in
-  let v4 = token env v4 (* ">" *) in
+  let v4 = token env v4 (* "/>" *) in
   todo env (v1, v2, v3, v4)
 
 let map_start_tag (env : env) ((v1, v2, v3, v4) : CST.start_tag) =
@@ -129,8 +138,20 @@ let map_start_tag (env : env) ((v1, v2, v3, v4) : CST.start_tag) =
   let v4 = token env v4 (* ">" *) in
   todo env (v1, v2, v3, v4)
 
+let map_style_start_tag (env : env) ((v1, v2, v3, v4) : CST.style_start_tag) =
+  let v1 = token env v1 (* "<" *) in
+  let v2 = token env v2 (* style_start_tag_name *) in
+  let v3 = List.map (map_attribute env) v3 in
+  let v4 = token env v4 (* ">" *) in
+  todo env (v1, v2, v3, v4)
+
 let rec map_element (env : env) (x : CST.element) =
   (match x with
+  | `Semg_elem (v1, v2, v3) ->
+      let v1 = map_semgrep_start_tag env v1 in
+      let v2 = map_fragment env v2 in
+      let v3 = map_semgrep_end_tag env v3 in
+      todo env (v1, v2, v3)
   | `Start_tag_rep_node_choice_end_tag (v1, v2, v3) ->
       let v1 = map_start_tag env v1 in
       let v2 = map_fragment env v2 in
