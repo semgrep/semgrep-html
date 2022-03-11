@@ -47,15 +47,10 @@ type pat_58fbb2e = Token.t (* pattern "[^']+" *)
 type end_tag_name = Token.t
 [@@deriving sexp_of]
 
-type text = Token.t (* pattern [^<>]+ *)
+type text = Token.t (* pattern [^<>\s]([^<>]*[^<>\s])? *)
 [@@deriving sexp_of]
 
 type attribute_value = Token.t (* pattern "[^<>\"'=\\s]+" *)
-[@@deriving sexp_of]
-
-type semgrep_end_tag = (
-    Token.t (* "</" *) * semgrep_metavariable (*tok*) * Token.t (* ">" *)
-)
 [@@deriving sexp_of]
 
 type quoted_attribute_value = [
@@ -72,9 +67,14 @@ type quoted_attribute_value = [
 ]
 [@@deriving sexp_of]
 
-type end_tag = (
-    Token.t (* "</" *) * end_tag_name (*tok*) * Token.t (* ">" *)
-)
+type end_tag = [
+    `Semg_end_tag of (
+        Token.t (* "</" *) * semgrep_metavariable (*tok*) * Token.t (* ">" *)
+    )
+  | `LTSLASH_end_tag_name_GT of (
+        Token.t (* "</" *) * end_tag_name (*tok*) * Token.t (* ">" *)
+    )
+]
 [@@deriving sexp_of]
 
 type attribute = (
@@ -98,22 +98,6 @@ type script_start_tag = (
 )
 [@@deriving sexp_of]
 
-type semgrep_start_tag = (
-    Token.t (* "<" *)
-  * semgrep_metavariable (*tok*)
-  * attribute list (* zero or more *)
-  * Token.t (* "/>" *)
-)
-[@@deriving sexp_of]
-
-type start_tag = (
-    Token.t (* "<" *)
-  * start_tag_name (*tok*)
-  * attribute list (* zero or more *)
-  * Token.t (* ">" *)
-)
-[@@deriving sexp_of]
-
 type style_start_tag = (
     Token.t (* "<" *)
   * style_start_tag_name (*tok*)
@@ -122,9 +106,24 @@ type style_start_tag = (
 )
 [@@deriving sexp_of]
 
+type start_tag = [
+    `Semg_start_tag of (
+        Token.t (* "<" *)
+      * semgrep_metavariable (*tok*)
+      * attribute list (* zero or more *)
+      * Token.t (* ">" *)
+    )
+  | `LT_start_tag_name_rep_attr_GT of (
+        Token.t (* "<" *)
+      * start_tag_name (*tok*)
+      * attribute list (* zero or more *)
+      * Token.t (* ">" *)
+    )
+]
+[@@deriving sexp_of]
+
 type element = [
-    `Semg_elem of (semgrep_start_tag * fragment * semgrep_end_tag)
-  | `Start_tag_rep_node_choice_end_tag of (
+    `Start_tag_rep_node_choice_end_tag of (
         start_tag
       * fragment
       * [ `End_tag of end_tag | `Impl_end_tag of implicit_end_tag (*tok*) ]
@@ -158,6 +157,11 @@ and node = [
 type comment (* inlined *) = Token.t
 [@@deriving sexp_of]
 
+type semgrep_end_tag (* inlined *) = (
+    Token.t (* "</" *) * semgrep_metavariable (*tok*) * Token.t (* ">" *)
+)
+[@@deriving sexp_of]
+
 type erroneous_end_tag (* inlined *) = (
     Token.t (* "</" *) * erroneous_end_tag_name (*tok*) * Token.t (* ">" *)
 )
@@ -165,6 +169,14 @@ type erroneous_end_tag (* inlined *) = (
 
 type doctype_ (* inlined *) = (
     Token.t (* "<!" *) * doctype (*tok*) * pat_03aa317 (*tok*)
+  * Token.t (* ">" *)
+)
+[@@deriving sexp_of]
+
+type semgrep_start_tag (* inlined *) = (
+    Token.t (* "<" *)
+  * semgrep_metavariable (*tok*)
+  * attribute list (* zero or more *)
   * Token.t (* ">" *)
 )
 [@@deriving sexp_of]
@@ -188,11 +200,6 @@ type style_element (* inlined *) = (
     style_start_tag
   * raw_text (*tok*) option
   * end_tag
-)
-[@@deriving sexp_of]
-
-type semgrep_element (* inlined *) = (
-    semgrep_start_tag * fragment * semgrep_end_tag
 )
 [@@deriving sexp_of]
 

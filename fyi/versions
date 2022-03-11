@@ -1,34 +1,45 @@
 File: semgrep-grammars/src/tree-sitter-html/LICENSE
 Git repo name: tree-sitter-html
-Latest commit in repo: d93af487cc75120c89257195e6be46c999c6ba18
+Latest commit in repo: 161a92474a7bb2e9e830e48e76426f38299d99d1
 Last change in file:
-  commit e74d96c27b307860be340cfcfebf367114b0fd65
-  Author: Max Brunsfeld <maxbrunsfeld@gmail.com>
-  Date:   Mon Jun 11 13:18:00 2018 -0700
+  commit 161a92474a7bb2e9e830e48e76426f38299d99d1
+  Author: Microsoft Provenance Contributions <enhanceprovenance@microsoft.com>
+  Date:   Tue Aug 17 11:20:56 2021 -0700
   
-      Initial commit
+      Update package.json to include the repository key (#31)
       
-      Co-Authored-By: Ashi Krishan <queerviolet@github.com>
+      With the rise in supply chain attacks and OSS dependencies being used as a attack vector, Microsoft is working with our ecosystem partners, such as the Linux Foundation's OpenSSF, to enable OSS consumers to track packages back to their public sources.
+      We've identified that the following packages published to NPM do not report where sources can be found, typically accomplished by including a link to your GitHub repository in your `package.json` REPOSITORY field. This PR was created to add this value, ensuring future releases will include this provenance information.
+      Published NPM packages with repository information:
+      * tree-sitter-html
 ---
 File: semgrep-grammars/src/tree-sitter-html/grammar.js
 Git repo name: tree-sitter-html
-Latest commit in repo: d93af487cc75120c89257195e6be46c999c6ba18
+Latest commit in repo: 161a92474a7bb2e9e830e48e76426f38299d99d1
 Last change in file:
-  commit 30b7bf0f46933c85ebe28ba5e93bee257d439604
-  Author: Max Brunsfeld <maxbrunsfeld@gmail.com>
-  Date:   Fri Dec 14 17:43:41 2018 -0800
+  commit 161a92474a7bb2e9e830e48e76426f38299d99d1
+  Author: Microsoft Provenance Contributions <enhanceprovenance@microsoft.com>
+  Date:   Tue Aug 17 11:20:56 2021 -0700
   
-      Make distinct nodes for style/script, set up injection
+      Update package.json to include the repository key (#31)
+      
+      With the rise in supply chain attacks and OSS dependencies being used as a attack vector, Microsoft is working with our ecosystem partners, such as the Linux Foundation's OpenSSF, to enable OSS consumers to track packages back to their public sources.
+      We've identified that the following packages published to NPM do not report where sources can be found, typically accomplished by including a link to your GitHub repository in your `package.json` REPOSITORY field. This PR was created to add this value, ensuring future releases will include this provenance information.
+      Published NPM packages with repository information:
+      * tree-sitter-html
 ---
 File: semgrep-grammars/src/semgrep-html/grammar.js
 Git repo name: ocaml-tree-sitter-semgrep
-Latest commit in repo: 8d6dc1ab95afa5e0733e93afaeffa3b7ad3783b1
+Latest commit in repo: f1635549a6864a078d6c31407f6bb8c00143872b
 Last change in file:
-  commit 8d6dc1ab95afa5e0733e93afaeffa3b7ad3783b1
-  Author: pad <yoann.padioleau@gmail.com>
-  Date:   Fri Jul 9 16:01:42 2021 +0200
+  commit f1635549a6864a078d6c31407f6bb8c00143872b
+  Author: pad <pad@r2c.dev>
+  Date:   Fri Mar 11 14:02:57 2022 +0100
   
-      [Semgrep-html] allow metavariables for tags
+      [HTML] support metavar for tags
+      
+      This overrides a very old PR:
+      https://github.com/returntocorp/ocaml-tree-sitter-semgrep/pull/234
       
       test plan:
       ./test-lang html

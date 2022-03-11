@@ -13,55 +13,35 @@ module.exports = grammar(base_grammar, {
   ]),
 
   /*
-     Support for semgrep ellipsis ('...') and metavariables ('$FOO'),
-     if they're not already part of the base grammar.
+     ellipsis ('...') and metavariables ('$FOO') are actually
+     valid HTML syntax in many places, so we don't need that many
+     grammar extensions
   */
   rules: {
+    //alt: redefine instead _start_tag_name and _end_tag_name?
+    start_tag: ($, previous) => choice(
+      $.semgrep_start_tag,
+      previous
+    ),
+    end_tag: ($, previous) => choice(
+      $.semgrep_end_tag,
+      previous
+    ),
 
-/* pad: not sure why, but this is simpler than patching element but
-   it does not work. I get some 
+    semgrep_start_tag: $ => seq(
+      '<',
+      $.semgrep_metavariable,
+      repeat($.attribute),
+      '>'
+    ),
 
-       "The rule `start_tag` matches the empty string" tree-sitter
+    semgrep_end_tag: $ => seq(
+      '</',
+      $.semgrep_metavariable,
+      '>'
+    ),
 
-   error.
-
-    start_tag: ($, previous) => {
-      return choice(
-       $.semgrep_start_tag,
-       ...previous.members
-      );
-    },
-*/
-    element: ($, previous) => {
-      return choice(
-       $.semgrep_element,
-       ...previous.members
-      );
-    },
-
-    semgrep_element: $ => 
-     seq(
-       $._semgrep_start_tag,
-       repeat($._node),
-       $._semgrep_end_tag
-     ),
-
-    _semgrep_start_tag: $ => seq(
-        '<',
-        $._semgrep_metavariable,
-        repeat($.attribute),
-        '/>'
-     ),
-    _semgrep_end_tag: $ => seq(
-     '</',
-     $._semgrep_metavariable,
-     '>'
-   ),
-
-    _semgrep_metavariable: $ => token(/\$[A-Z_][A-Z_0-9]*/),
-
-  /*
-    semgrep_ellipsis: $ => '...',
-  */
+    semgrep_metavariable: $ => token(/\$[A-Z_][A-Z_0-9]*/),
+      
   }
 });
