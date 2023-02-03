@@ -33,29 +33,21 @@ let extras = [
 ]
 
 let children_regexps : (string * Run.exp option) list = [
-  "raw_text", None;
-  "attribute_name", None;
-  "semgrep_metavariable", None;
   "doctype", None;
   "text", None;
   "pat_58fbb2e", None;
   "pat_98d585a", None;
-  "start_tag_name", None;
-  "erroneous_end_tag_name", None;
   "implicit_end_tag", None;
-  "pat_03aa317", None;
   "end_tag_name", None;
+  "attribute_name", None;
+  "semgrep_metavariable", None;
+  "start_tag_name", None;
+  "pat_03aa317", None;
+  "raw_text", None;
+  "erroneous_end_tag_name", None;
   "style_start_tag_name", None;
   "attribute_value", None;
   "script_start_tag_name", None;
-  "semgrep_end_tag",
-  Some (
-    Seq [
-      Token (Literal "</");
-      Token (Name "semgrep_metavariable");
-      Token (Literal ">");
-    ];
-  );
   "quoted_attribute_value",
   Some (
     Alt [|
@@ -75,11 +67,11 @@ let children_regexps : (string * Run.exp option) list = [
       ];
     |];
   );
-  "erroneous_end_tag",
+  "semgrep_end_tag",
   Some (
     Seq [
       Token (Literal "</");
-      Token (Name "erroneous_end_tag_name");
+      Token (Name "semgrep_metavariable");
       Token (Literal ">");
     ];
   );
@@ -92,16 +84,13 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Literal ">");
     ];
   );
-  "end_tag",
+  "erroneous_end_tag",
   Some (
-    Alt [|
-      Token (Name "semgrep_end_tag");
-      Seq [
-        Token (Literal "</");
-        Token (Name "end_tag_name");
-        Token (Literal ">");
-      ];
-    |];
+    Seq [
+      Token (Literal "</");
+      Token (Name "erroneous_end_tag_name");
+      Token (Literal ">");
+    ];
   );
   "attribute",
   Some (
@@ -118,26 +107,25 @@ let children_regexps : (string * Run.exp option) list = [
       );
     ];
   );
-  "script_start_tag",
+  "end_tag",
   Some (
-    Seq [
-      Token (Literal "<");
-      Token (Name "script_start_tag_name");
-      Repeat (
-        Token (Name "attribute");
-      );
-      Token (Literal ">");
-    ];
+    Alt [|
+      Token (Name "semgrep_end_tag");
+      Seq [
+        Token (Literal "</");
+        Token (Name "end_tag_name");
+        Token (Literal ">");
+      ];
+    |];
   );
-  "style_start_tag",
+  "xmldoctype",
   Some (
     Seq [
-      Token (Literal "<");
-      Token (Name "style_start_tag_name");
+      Token (Literal "<?xml");
       Repeat (
         Token (Name "attribute");
       );
-      Token (Literal ">");
+      Token (Literal "?>");
     ];
   );
   "semgrep_start_tag",
@@ -162,6 +150,42 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Literal "/>");
     ];
   );
+  "script_start_tag",
+  Some (
+    Seq [
+      Token (Literal "<");
+      Token (Name "script_start_tag_name");
+      Repeat (
+        Token (Name "attribute");
+      );
+      Token (Literal ">");
+    ];
+  );
+  "style_start_tag",
+  Some (
+    Seq [
+      Token (Literal "<");
+      Token (Name "style_start_tag_name");
+      Repeat (
+        Token (Name "attribute");
+      );
+      Token (Literal ">");
+    ];
+  );
+  "start_tag",
+  Some (
+    Alt [|
+      Token (Name "semgrep_start_tag");
+      Seq [
+        Token (Literal "<");
+        Token (Name "start_tag_name");
+        Repeat (
+          Token (Name "attribute");
+        );
+        Token (Literal ">");
+      ];
+    |];
+  );
   "script_element",
   Some (
     Seq [
@@ -182,20 +206,6 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Name "end_tag");
     ];
   );
-  "start_tag",
-  Some (
-    Alt [|
-      Token (Name "semgrep_start_tag");
-      Seq [
-        Token (Literal "<");
-        Token (Name "start_tag_name");
-        Repeat (
-          Token (Name "attribute");
-        );
-        Token (Literal ">");
-      ];
-    |];
-  );
   "element",
   Some (
     Alt [|
@@ -215,12 +225,15 @@ let children_regexps : (string * Run.exp option) list = [
   "node",
   Some (
     Alt [|
-      Token (Name "doctype_");
-      Token (Name "text");
-      Token (Name "element");
-      Token (Name "script_element");
-      Token (Name "style_element");
-      Token (Name "erroneous_end_tag");
+      Token (Name "xmldoctype");
+      Alt [|
+        Token (Name "doctype_");
+        Token (Name "text");
+        Token (Name "element");
+        Token (Name "script_element");
+        Token (Name "style_element");
+        Token (Name "erroneous_end_tag");
+      |];
     |];
   );
   "fragment",
@@ -231,7 +244,32 @@ let children_regexps : (string * Run.exp option) list = [
   );
 ]
 
-let trans_raw_text ((kind, body) : mt) : CST.raw_text =
+let trans_doctype ((kind, body) : mt) : CST.doctype =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_text ((kind, body) : mt) : CST.text =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_pat_58fbb2e ((kind, body) : mt) : CST.pat_58fbb2e =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_pat_98d585a ((kind, body) : mt) : CST.pat_98d585a =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_implicit_end_tag ((kind, body) : mt) : CST.implicit_end_tag =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_end_tag_name ((kind, body) : mt) : CST.end_tag_name =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
@@ -246,38 +284,8 @@ let trans_semgrep_metavariable ((kind, body) : mt) : CST.semgrep_metavariable =
   | Leaf v -> v
   | Children _ -> assert false
 
-let trans_doctype ((kind, body) : mt) : CST.doctype =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_text ((kind, body) : mt) : CST.text =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-
-let trans_pat_58fbb2e ((kind, body) : mt) : CST.pat_58fbb2e =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_pat_98d585a ((kind, body) : mt) : CST.pat_98d585a =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
 
 let trans_start_tag_name ((kind, body) : mt) : CST.start_tag_name =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_erroneous_end_tag_name ((kind, body) : mt) : CST.erroneous_end_tag_name =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_implicit_end_tag ((kind, body) : mt) : CST.implicit_end_tag =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
@@ -287,7 +295,12 @@ let trans_pat_03aa317 ((kind, body) : mt) : CST.pat_03aa317 =
   | Leaf v -> v
   | Children _ -> assert false
 
-let trans_end_tag_name ((kind, body) : mt) : CST.end_tag_name =
+let trans_raw_text ((kind, body) : mt) : CST.raw_text =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_erroneous_end_tag_name ((kind, body) : mt) : CST.erroneous_end_tag_name =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
@@ -306,20 +319,6 @@ let trans_script_start_tag_name ((kind, body) : mt) : CST.script_start_tag_name 
   match body with
   | Leaf v -> v
   | Children _ -> assert false
-
-let trans_semgrep_end_tag ((kind, body) : mt) : CST.semgrep_end_tag =
-  match body with
-  | Children v ->
-      (match v with
-      | Seq [v0; v1; v2] ->
-          (
-            Run.trans_token (Run.matcher_token v0),
-            trans_semgrep_metavariable (Run.matcher_token v1),
-            Run.trans_token (Run.matcher_token v2)
-          )
-      | _ -> assert false
-      )
-  | Leaf _ -> assert false
 
 let trans_quoted_attribute_value ((kind, body) : mt) : CST.quoted_attribute_value =
   match body with
@@ -359,14 +358,14 @@ let trans_quoted_attribute_value ((kind, body) : mt) : CST.quoted_attribute_valu
       )
   | Leaf _ -> assert false
 
-let trans_erroneous_end_tag ((kind, body) : mt) : CST.erroneous_end_tag =
+let trans_semgrep_end_tag ((kind, body) : mt) : CST.semgrep_end_tag =
   match body with
   | Children v ->
       (match v with
       | Seq [v0; v1; v2] ->
           (
             Run.trans_token (Run.matcher_token v0),
-            trans_erroneous_end_tag_name (Run.matcher_token v1),
+            trans_semgrep_metavariable (Run.matcher_token v1),
             Run.trans_token (Run.matcher_token v2)
           )
       | _ -> assert false
@@ -388,25 +387,15 @@ let trans_doctype_ ((kind, body) : mt) : CST.doctype_ =
       )
   | Leaf _ -> assert false
 
-let trans_end_tag ((kind, body) : mt) : CST.end_tag =
+let trans_erroneous_end_tag ((kind, body) : mt) : CST.erroneous_end_tag =
   match body with
   | Children v ->
       (match v with
-      | Alt (0, v) ->
-          `Semg_end_tag (
-            trans_semgrep_end_tag (Run.matcher_token v)
-          )
-      | Alt (1, v) ->
-          `LTSLASH_end_tag_name_GT (
-            (match v with
-            | Seq [v0; v1; v2] ->
-                (
-                  Run.trans_token (Run.matcher_token v0),
-                  trans_end_tag_name (Run.matcher_token v1),
-                  Run.trans_token (Run.matcher_token v2)
-                )
-            | _ -> assert false
-            )
+      | Seq [v0; v1; v2] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_erroneous_end_tag_name (Run.matcher_token v1),
+            Run.trans_token (Run.matcher_token v2)
           )
       | _ -> assert false
       )
@@ -446,37 +435,42 @@ let trans_attribute ((kind, body) : mt) : CST.attribute =
       )
   | Leaf _ -> assert false
 
-let trans_script_start_tag ((kind, body) : mt) : CST.script_start_tag =
+let trans_end_tag ((kind, body) : mt) : CST.end_tag =
   match body with
   | Children v ->
       (match v with
-      | Seq [v0; v1; v2; v3] ->
-          (
-            Run.trans_token (Run.matcher_token v0),
-            trans_script_start_tag_name (Run.matcher_token v1),
-            Run.repeat
-              (fun v -> trans_attribute (Run.matcher_token v))
-              v2
-            ,
-            Run.trans_token (Run.matcher_token v3)
+      | Alt (0, v) ->
+          `Semg_end_tag (
+            trans_semgrep_end_tag (Run.matcher_token v)
+          )
+      | Alt (1, v) ->
+          `LTSLASH_end_tag_name_GT (
+            (match v with
+            | Seq [v0; v1; v2] ->
+                (
+                  Run.trans_token (Run.matcher_token v0),
+                  trans_end_tag_name (Run.matcher_token v1),
+                  Run.trans_token (Run.matcher_token v2)
+                )
+            | _ -> assert false
+            )
           )
       | _ -> assert false
       )
   | Leaf _ -> assert false
 
-let trans_style_start_tag ((kind, body) : mt) : CST.style_start_tag =
+let trans_xmldoctype ((kind, body) : mt) : CST.xmldoctype =
   match body with
   | Children v ->
       (match v with
-      | Seq [v0; v1; v2; v3] ->
+      | Seq [v0; v1; v2] ->
           (
             Run.trans_token (Run.matcher_token v0),
-            trans_style_start_tag_name (Run.matcher_token v1),
             Run.repeat
               (fun v -> trans_attribute (Run.matcher_token v))
-              v2
+              v1
             ,
-            Run.trans_token (Run.matcher_token v3)
+            Run.trans_token (Run.matcher_token v2)
           )
       | _ -> assert false
       )
@@ -518,6 +512,70 @@ let trans_self_closing_tag ((kind, body) : mt) : CST.self_closing_tag =
       )
   | Leaf _ -> assert false
 
+let trans_script_start_tag ((kind, body) : mt) : CST.script_start_tag =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2; v3] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_script_start_tag_name (Run.matcher_token v1),
+            Run.repeat
+              (fun v -> trans_attribute (Run.matcher_token v))
+              v2
+            ,
+            Run.trans_token (Run.matcher_token v3)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+let trans_style_start_tag ((kind, body) : mt) : CST.style_start_tag =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2; v3] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_style_start_tag_name (Run.matcher_token v1),
+            Run.repeat
+              (fun v -> trans_attribute (Run.matcher_token v))
+              v2
+            ,
+            Run.trans_token (Run.matcher_token v3)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+let trans_start_tag ((kind, body) : mt) : CST.start_tag =
+  match body with
+  | Children v ->
+      (match v with
+      | Alt (0, v) ->
+          `Semg_start_tag (
+            trans_semgrep_start_tag (Run.matcher_token v)
+          )
+      | Alt (1, v) ->
+          `LT_start_tag_name_rep_attr_GT (
+            (match v with
+            | Seq [v0; v1; v2; v3] ->
+                (
+                  Run.trans_token (Run.matcher_token v0),
+                  trans_start_tag_name (Run.matcher_token v1),
+                  Run.repeat
+                    (fun v -> trans_attribute (Run.matcher_token v))
+                    v2
+                  ,
+                  Run.trans_token (Run.matcher_token v3)
+                )
+            | _ -> assert false
+            )
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
 let trans_script_element ((kind, body) : mt) : CST.script_element =
   match body with
   | Children v ->
@@ -547,34 +605,6 @@ let trans_style_element ((kind, body) : mt) : CST.style_element =
               v1
             ,
             trans_end_tag (Run.matcher_token v2)
-          )
-      | _ -> assert false
-      )
-  | Leaf _ -> assert false
-
-let trans_start_tag ((kind, body) : mt) : CST.start_tag =
-  match body with
-  | Children v ->
-      (match v with
-      | Alt (0, v) ->
-          `Semg_start_tag (
-            trans_semgrep_start_tag (Run.matcher_token v)
-          )
-      | Alt (1, v) ->
-          `LT_start_tag_name_rep_attr_GT (
-            (match v with
-            | Seq [v0; v1; v2; v3] ->
-                (
-                  Run.trans_token (Run.matcher_token v0),
-                  trans_start_tag_name (Run.matcher_token v1),
-                  Run.repeat
-                    (fun v -> trans_attribute (Run.matcher_token v))
-                    v2
-                  ,
-                  Run.trans_token (Run.matcher_token v3)
-                )
-            | _ -> assert false
-            )
           )
       | _ -> assert false
       )
@@ -622,28 +652,38 @@ and trans_node ((kind, body) : mt) : CST.node =
   | Children v ->
       (match v with
       | Alt (0, v) ->
-          `Doct_ (
-            trans_doctype_ (Run.matcher_token v)
+          `Xmld (
+            trans_xmldoctype (Run.matcher_token v)
           )
       | Alt (1, v) ->
-          `Text (
-            trans_text (Run.matcher_token v)
-          )
-      | Alt (2, v) ->
-          `Elem (
-            trans_element (Run.matcher_token v)
-          )
-      | Alt (3, v) ->
-          `Script_elem (
-            trans_script_element (Run.matcher_token v)
-          )
-      | Alt (4, v) ->
-          `Style_elem (
-            trans_style_element (Run.matcher_token v)
-          )
-      | Alt (5, v) ->
-          `Errons_end_tag (
-            trans_erroneous_end_tag (Run.matcher_token v)
+          `Choice_doct_ (
+            (match v with
+            | Alt (0, v) ->
+                `Doct_ (
+                  trans_doctype_ (Run.matcher_token v)
+                )
+            | Alt (1, v) ->
+                `Text (
+                  trans_text (Run.matcher_token v)
+                )
+            | Alt (2, v) ->
+                `Elem (
+                  trans_element (Run.matcher_token v)
+                )
+            | Alt (3, v) ->
+                `Script_elem (
+                  trans_script_element (Run.matcher_token v)
+                )
+            | Alt (4, v) ->
+                `Style_elem (
+                  trans_style_element (Run.matcher_token v)
+                )
+            | Alt (5, v) ->
+                `Errons_end_tag (
+                  trans_erroneous_end_tag (Run.matcher_token v)
+                )
+            | _ -> assert false
+            )
           )
       | _ -> assert false
       )

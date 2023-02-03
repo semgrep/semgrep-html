@@ -30,17 +30,16 @@ Last change in file:
 ---
 File: semgrep-grammars/src/semgrep-html/grammar.js
 Git repo name: ocaml-tree-sitter-semgrep
-Latest commit in repo: f1635549a6864a078d6c31407f6bb8c00143872b
+Latest commit in repo: f3347052760e25d606782bf91e0769a5ce5f6023
 Last change in file:
-  commit f1635549a6864a078d6c31407f6bb8c00143872b
+  commit f3347052760e25d606782bf91e0769a5ce5f6023
   Author: pad <pad@r2c.dev>
-  Date:   Fri Mar 11 14:02:57 2022 +0100
+  Date:   Fri Feb 3 12:30:47 2023 +0100
   
-      [HTML] support metavar for tags
-      
-      This overrides a very old PR:
-      https://github.com/returntocorp/ocaml-tree-sitter-semgrep/pull/234
+      XML: add support for xml by tweaking semgrep-html
       
       test plan:
       ./test-lang html
+      ./html/parse-html ~/pom.xml
+      which works
 ---

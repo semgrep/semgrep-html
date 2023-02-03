@@ -82,6 +82,10 @@ struct Scanner {
   string scan_tag_name(TSLexer *lexer) {
     string tag_name;
     while (iswalnum(lexer->lookahead) ||
+	   // to accept xml names!
+           lexer->lookahead == '.' ||
+           lexer->lookahead == '_' ||
+	   // original html-only name
            lexer->lookahead == '-' ||
            lexer->lookahead == ':') {
       tag_name += towupper(lexer->lookahead);
