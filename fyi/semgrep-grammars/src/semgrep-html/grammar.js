@@ -24,9 +24,21 @@ module.exports = grammar(base_grammar, {
   */
     rules: {
 
-     fragment: $ => repeat($._toplevel_node),
+     // toplevel_node was added to support toplevel attribute patterns. An
+     // alternative would be to just do
+     //    fragment: choice(previous, $.toplevel_attribute)
+     // but this does not work because 'foo=1' would still be parsed
+     // as a text. Indeed, the regexp for 'text' accepts also newlines and
+     // so the match is probably longer than for a toplevel_attribute.
+     // Hence the introduction of an extra _toplevel_node that does not
+     // allow toplevel text. Hopefully most HTML files have some
+     // toplevel elements (e.g., <html>) and not just text.
+     fragment: $ => choice(
+        repeat($._toplevel_node),
+        $.toplevel_attribute,
+    ),
 
-    // like _node, but without $.text and with new entries
+    // like _node, but without $.text and with a new entry for XML
     _toplevel_node: $ => choice(
       $.doctype,
       //nope: $.text,
@@ -35,7 +47,6 @@ module.exports = grammar(base_grammar, {
       $.style_element,
       $.erroneous_end_tag,
       //NEW:
-      $.toplevel_attribute,
       $.xmldoctype
     ),
 

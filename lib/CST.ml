@@ -140,10 +140,6 @@ type toplevel_node = [
   | `Script_elem of script_element
   | `Style_elem of style_element
   | `Errons_end_tag of erroneous_end_tag
-  | `Topl_attr of (
-        attribute_name (*tok*) * Token.t (* "=" *)
-      * anon_choice_attr_value_5986531
-    )
   | `Xmld of (
         Token.t (* "<?xml" *)
       * attribute list (* zero or more *)
@@ -151,7 +147,13 @@ type toplevel_node = [
     )
 ]
 
-type fragment = toplevel_node list (* zero or more *)
+type fragment = [
+    `Rep_topl_node of toplevel_node list (* zero or more *)
+  | `Topl_attr of (
+        attribute_name (*tok*) * Token.t (* "=" *)
+      * anon_choice_attr_value_5986531
+    )
+]
 
 type comment (* inlined *) = Token.t
 

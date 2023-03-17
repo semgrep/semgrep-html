@@ -267,12 +267,6 @@ let map_toplevel_node (env : env) (x : CST.toplevel_node) =
   | `Errons_end_tag x -> R.Case ("Errons_end_tag",
       map_erroneous_end_tag env x
     )
-  | `Topl_attr (v1, v2, v3) -> R.Case ("Topl_attr",
-      let v1 = (* pattern "[^<>\"'/=\\s]+" *) token env v1 in
-      let v2 = (* "=" *) token env v2 in
-      let v3 = map_anon_choice_attr_value_5986531 env v3 in
-      R.Tuple [v1; v2; v3]
-    )
   | `Xmld (v1, v2, v3) -> R.Case ("Xmld",
       let v1 = (* "<?xml" *) token env v1 in
       let v2 = R.List (List.map (map_attribute env) v2) in
@@ -281,8 +275,18 @@ let map_toplevel_node (env : env) (x : CST.toplevel_node) =
     )
   )
 
-let map_fragment (env : env) (xs : CST.fragment) =
-  R.List (List.map (map_toplevel_node env) xs)
+let map_fragment (env : env) (x : CST.fragment) =
+  (match x with
+  | `Rep_topl_node xs -> R.Case ("Rep_topl_node",
+      R.List (List.map (map_toplevel_node env) xs)
+    )
+  | `Topl_attr (v1, v2, v3) -> R.Case ("Topl_attr",
+      let v1 = (* pattern "[^<>\"'/=\\s]+" *) token env v1 in
+      let v2 = (* "=" *) token env v2 in
+      let v3 = map_anon_choice_attr_value_5986531 env v3 in
+      R.Tuple [v1; v2; v3]
+    )
+  )
 
 let dump_tree root =
   map_fragment () root

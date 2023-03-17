@@ -252,15 +252,17 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Name "script_element");
       Token (Name "style_element");
       Token (Name "erroneous_end_tag");
-      Token (Name "toplevel_attribute");
       Token (Name "xmldoctype");
     |];
   );
   "fragment",
   Some (
-    Repeat (
-      Token (Name "toplevel_node");
-    );
+    Alt [|
+      Repeat (
+        Token (Name "toplevel_node");
+      );
+      Token (Name "toplevel_attribute");
+    |];
   );
 ]
 
@@ -748,10 +750,6 @@ let trans_toplevel_node ((kind, body) : mt) : CST.toplevel_node =
             trans_erroneous_end_tag (Run.matcher_token v)
           )
       | Alt (5, v) ->
-          `Topl_attr (
-            trans_toplevel_attribute (Run.matcher_token v)
-          )
-      | Alt (6, v) ->
           `Xmld (
             trans_xmldoctype (Run.matcher_token v)
           )
@@ -762,9 +760,19 @@ let trans_toplevel_node ((kind, body) : mt) : CST.toplevel_node =
 let trans_fragment ((kind, body) : mt) : CST.fragment =
   match body with
   | Children v ->
-      Run.repeat
-        (fun v -> trans_toplevel_node (Run.matcher_token v))
-        v
+      (match v with
+      | Alt (0, v) ->
+          `Rep_topl_node (
+            Run.repeat
+              (fun v -> trans_toplevel_node (Run.matcher_token v))
+              v
+          )
+      | Alt (1, v) ->
+          `Topl_attr (
+            trans_toplevel_attribute (Run.matcher_token v)
+          )
+      | _ -> assert false
+      )
   | Leaf _ -> assert false
 
 let parse_input_tree input_tree =
