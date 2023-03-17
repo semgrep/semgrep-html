@@ -92,6 +92,17 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Literal ">");
     ];
   );
+  "toplevel_attribute",
+  Some (
+    Seq [
+      Token (Name "attribute_name");
+      Token (Literal "=");
+      Alt [|
+        Token (Name "attribute_value");
+        Token (Name "quoted_attribute_value");
+      |];
+    ];
+  );
   "attribute",
   Some (
     Seq [
@@ -117,16 +128,6 @@ let children_regexps : (string * Run.exp option) list = [
         Token (Literal ">");
       ];
     |];
-  );
-  "xmldoctype",
-  Some (
-    Seq [
-      Token (Literal "<?xml");
-      Repeat (
-        Token (Name "attribute");
-      );
-      Token (Literal "?>");
-    ];
   );
   "semgrep_start_tag",
   Some (
@@ -170,6 +171,16 @@ let children_regexps : (string * Run.exp option) list = [
         Token (Name "attribute");
       );
       Token (Literal ">");
+    ];
+  );
+  "xmldoctype",
+  Some (
+    Seq [
+      Token (Literal "<?xml");
+      Repeat (
+        Token (Name "attribute");
+      );
+      Token (Literal "?>");
     ];
   );
   "start_tag",
@@ -225,21 +236,30 @@ let children_regexps : (string * Run.exp option) list = [
   "node",
   Some (
     Alt [|
+      Token (Name "doctype_");
+      Token (Name "text");
+      Token (Name "element");
+      Token (Name "script_element");
+      Token (Name "style_element");
+      Token (Name "erroneous_end_tag");
+    |];
+  );
+  "toplevel_node",
+  Some (
+    Alt [|
+      Token (Name "doctype_");
+      Token (Name "element");
+      Token (Name "script_element");
+      Token (Name "style_element");
+      Token (Name "erroneous_end_tag");
+      Token (Name "toplevel_attribute");
       Token (Name "xmldoctype");
-      Alt [|
-        Token (Name "doctype_");
-        Token (Name "text");
-        Token (Name "element");
-        Token (Name "script_element");
-        Token (Name "style_element");
-        Token (Name "erroneous_end_tag");
-      |];
     |];
   );
   "fragment",
   Some (
     Repeat (
-      Token (Name "node");
+      Token (Name "toplevel_node");
     );
   );
 ]
@@ -401,6 +421,30 @@ let trans_erroneous_end_tag ((kind, body) : mt) : CST.erroneous_end_tag =
       )
   | Leaf _ -> assert false
 
+let trans_toplevel_attribute ((kind, body) : mt) : CST.toplevel_attribute =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2] ->
+          (
+            trans_attribute_name (Run.matcher_token v0),
+            Run.trans_token (Run.matcher_token v1),
+            (match v2 with
+            | Alt (0, v) ->
+                `Attr_value (
+                  trans_attribute_value (Run.matcher_token v)
+                )
+            | Alt (1, v) ->
+                `Quoted_attr_value (
+                  trans_quoted_attribute_value (Run.matcher_token v)
+                )
+            | _ -> assert false
+            )
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
 let trans_attribute ((kind, body) : mt) : CST.attribute =
   match body with
   | Children v ->
@@ -454,23 +498,6 @@ let trans_end_tag ((kind, body) : mt) : CST.end_tag =
                 )
             | _ -> assert false
             )
-          )
-      | _ -> assert false
-      )
-  | Leaf _ -> assert false
-
-let trans_xmldoctype ((kind, body) : mt) : CST.xmldoctype =
-  match body with
-  | Children v ->
-      (match v with
-      | Seq [v0; v1; v2] ->
-          (
-            Run.trans_token (Run.matcher_token v0),
-            Run.repeat
-              (fun v -> trans_attribute (Run.matcher_token v))
-              v1
-            ,
-            Run.trans_token (Run.matcher_token v2)
           )
       | _ -> assert false
       )
@@ -543,6 +570,23 @@ let trans_style_start_tag ((kind, body) : mt) : CST.style_start_tag =
               v2
             ,
             Run.trans_token (Run.matcher_token v3)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+let trans_xmldoctype ((kind, body) : mt) : CST.xmldoctype =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            Run.repeat
+              (fun v -> trans_attribute (Run.matcher_token v))
+              v1
+            ,
+            Run.trans_token (Run.matcher_token v2)
           )
       | _ -> assert false
       )
@@ -652,38 +696,64 @@ and trans_node ((kind, body) : mt) : CST.node =
   | Children v ->
       (match v with
       | Alt (0, v) ->
-          `Xmld (
-            trans_xmldoctype (Run.matcher_token v)
+          `Doct_ (
+            trans_doctype_ (Run.matcher_token v)
           )
       | Alt (1, v) ->
-          `Choice_doct_ (
-            (match v with
-            | Alt (0, v) ->
-                `Doct_ (
-                  trans_doctype_ (Run.matcher_token v)
-                )
-            | Alt (1, v) ->
-                `Text (
-                  trans_text (Run.matcher_token v)
-                )
-            | Alt (2, v) ->
-                `Elem (
-                  trans_element (Run.matcher_token v)
-                )
-            | Alt (3, v) ->
-                `Script_elem (
-                  trans_script_element (Run.matcher_token v)
-                )
-            | Alt (4, v) ->
-                `Style_elem (
-                  trans_style_element (Run.matcher_token v)
-                )
-            | Alt (5, v) ->
-                `Errons_end_tag (
-                  trans_erroneous_end_tag (Run.matcher_token v)
-                )
-            | _ -> assert false
-            )
+          `Text (
+            trans_text (Run.matcher_token v)
+          )
+      | Alt (2, v) ->
+          `Elem (
+            trans_element (Run.matcher_token v)
+          )
+      | Alt (3, v) ->
+          `Script_elem (
+            trans_script_element (Run.matcher_token v)
+          )
+      | Alt (4, v) ->
+          `Style_elem (
+            trans_style_element (Run.matcher_token v)
+          )
+      | Alt (5, v) ->
+          `Errons_end_tag (
+            trans_erroneous_end_tag (Run.matcher_token v)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+let trans_toplevel_node ((kind, body) : mt) : CST.toplevel_node =
+  match body with
+  | Children v ->
+      (match v with
+      | Alt (0, v) ->
+          `Doct_ (
+            trans_doctype_ (Run.matcher_token v)
+          )
+      | Alt (1, v) ->
+          `Elem (
+            trans_element (Run.matcher_token v)
+          )
+      | Alt (2, v) ->
+          `Script_elem (
+            trans_script_element (Run.matcher_token v)
+          )
+      | Alt (3, v) ->
+          `Style_elem (
+            trans_style_element (Run.matcher_token v)
+          )
+      | Alt (4, v) ->
+          `Errons_end_tag (
+            trans_erroneous_end_tag (Run.matcher_token v)
+          )
+      | Alt (5, v) ->
+          `Topl_attr (
+            trans_toplevel_attribute (Run.matcher_token v)
+          )
+      | Alt (6, v) ->
+          `Xmld (
+            trans_xmldoctype (Run.matcher_token v)
           )
       | _ -> assert false
       )
@@ -693,7 +763,7 @@ let trans_fragment ((kind, body) : mt) : CST.fragment =
   match body with
   | Children v ->
       Run.repeat
-        (fun v -> trans_node (Run.matcher_token v))
+        (fun v -> trans_toplevel_node (Run.matcher_token v))
         v
   | Leaf _ -> assert false
 

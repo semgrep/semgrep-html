@@ -30,16 +30,17 @@ Last change in file:
 ---
 File: semgrep-grammars/src/semgrep-html/grammar.js
 Git repo name: ocaml-tree-sitter-semgrep
-Latest commit in repo: f3347052760e25d606782bf91e0769a5ce5f6023
+Latest commit in repo: a0ea99eec969fc7a6e172574f6bf72b25630d34c
 Last change in file:
-  commit f3347052760e25d606782bf91e0769a5ce5f6023
+  commit a0ea99eec969fc7a6e172574f6bf72b25630d34c
   Author: pad <pad@r2c.dev>
-  Date:   Fri Feb 3 12:30:47 2023 +0100
+  Date:   Fri Mar 17 12:25:19 2023 +0100
   
-      XML: add support for xml by tweaking semgrep-html
+      html: support attribute pattern for semgrep
+      
+      This will help https://github.com/returntocorp/semgrep/issues/7344
       
       test plan:
-      ./test-lang html
-      ./html/parse-html ~/pom.xml
-      which works
+      test file included
+      cd lang; ./test-lang html
 ---
