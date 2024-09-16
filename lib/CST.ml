@@ -2,41 +2,48 @@
 (*
    html grammar
 
-   entrypoint: fragment
+   entrypoint: document
 *)
 
 open! Sexplib.Conv
 open Tree_sitter_run
 
-type raw_text = Token.t
+type semgrep_metavariable = Token.t
 
-type style_start_tag_name = Token.t
+type implicit_end_tag = Token.t
 
 type pat_03aa317 = Token.t (* pattern [^>]+ *)
 
-type pat_58fbb2e = Token.t (* pattern "[^']+" *)
-
-type text = Token.t (* pattern [^<>\s]([^<>]*[^<>\s])? *)
+type style_start_tag_name = Token.t
 
 type attribute_value = Token.t (* pattern "[^<>\"'=\\s]+" *)
 
-type pat_98d585a = Token.t (* pattern "[^\"]+" *)
+type pat_58fbb2e = Token.t (* pattern "[^']+" *)
 
-type semgrep_metavariable = Token.t
-
-type script_start_tag_name = Token.t
+type entity =
+  Token.t (* pattern &(#([xX][0-9a-fA-F]{1,6}|[0-9]{1,5})|[A-Za-z]{1,30});? *)
 
 type erroneous_end_tag_name = Token.t
 
-type end_tag_name = Token.t
+type raw_text = Token.t
 
-type implicit_end_tag = Token.t
+type text = Token.t (* pattern [^<>&\s]([^<>&]*[^<>&\s])? *)
+
+type pat_98d585a = Token.t (* pattern "[^\"]+" *)
+
+type script_start_tag_name = Token.t
 
 type start_tag_name = Token.t
 
 type doctype = Token.t (* pattern [Dd][Oo][Cc][Tt][Yy][Pp][Ee] *)
 
+type end_tag_name = Token.t
+
 type attribute_name = Token.t (* pattern "[^<>\"'/=\\s]+" *)
+
+type erroneous_end_tag = (
+    Token.t (* "</" *) * erroneous_end_tag_name (*tok*) * Token.t (* ">" *)
+)
 
 type quoted_attribute_value = [
     `SQUOT_opt_pat_58fbb2e_SQUOT of (
@@ -51,18 +58,9 @@ type quoted_attribute_value = [
     )
 ]
 
-type erroneous_end_tag = (
-    Token.t (* "</" *) * erroneous_end_tag_name (*tok*) * Token.t (* ">" *)
-)
-
 type doctype_ = (
     Token.t (* "<!" *) * doctype (*tok*) * pat_03aa317 * Token.t (* ">" *)
 )
-
-type anon_choice_attr_value_5986531 = [
-    `Attr_value of attribute_value (*tok*)
-  | `Quoted_attr_value of quoted_attribute_value
-]
 
 type end_tag = [
     `Semg_end_tag of (
@@ -71,6 +69,11 @@ type end_tag = [
   | `LTSLASH_end_tag_name_GT of (
         Token.t (* "</" *) * end_tag_name (*tok*) * Token.t (* ">" *)
     )
+]
+
+type anon_choice_attr_value_5986531 = [
+    `Attr_value of attribute_value (*tok*)
+  | `Quoted_attr_value of quoted_attribute_value
 ]
 
 type attribute = (
@@ -92,6 +95,10 @@ type script_start_tag = (
   * Token.t (* ">" *)
 )
 
+type style_element = (style_start_tag * raw_text (*tok*) option * end_tag)
+
+type script_element = (script_start_tag * raw_text (*tok*) option * end_tag)
+
 type start_tag = [
     `Semg_start_tag of (
         Token.t (* "<" *)
@@ -106,10 +113,6 @@ type start_tag = [
       * Token.t (* ">" *)
     )
 ]
-
-type style_element = (style_start_tag * raw_text (*tok*) option * end_tag)
-
-type script_element = (script_start_tag * raw_text (*tok*) option * end_tag)
 
 type element = [
     `Start_tag_rep_node_choice_end_tag of (
@@ -127,6 +130,7 @@ type element = [
 
 and node = [
     `Doct_ of doctype_
+  | `Entity of entity (*tok*)
   | `Text of text (*tok*)
   | `Elem of element
   | `Script_elem of script_element
@@ -147,7 +151,7 @@ type toplevel_node = [
     )
 ]
 
-type fragment = [
+type document = [
     `Rep_topl_node of toplevel_node list (* zero or more *)
   | `Topl_attr of (
         attribute_name (*tok*) * Token.t (* "=" *)
@@ -166,6 +170,13 @@ type toplevel_attribute (* inlined *) = (
   * anon_choice_attr_value_5986531
 )
 
+type self_closing_tag (* inlined *) = (
+    Token.t (* "<" *)
+  * start_tag_name (*tok*)
+  * attribute list (* zero or more *)
+  * Token.t (* "/>" *)
+)
+
 type semgrep_start_tag (* inlined *) = (
     Token.t (* "<" *)
   * semgrep_metavariable (*tok*)
@@ -178,14 +189,3 @@ type xmldoctype (* inlined *) = (
   * attribute list (* zero or more *)
   * Token.t (* "?>" *)
 )
-
-type self_closing_tag (* inlined *) = (
-    Token.t (* "<" *)
-  * start_tag_name (*tok*)
-  * attribute list (* zero or more *)
-  * Token.t (* "/>" *)
-)
-
-type extra = [ `Comment of Loc.t * comment ]
-
-type extras = extra list

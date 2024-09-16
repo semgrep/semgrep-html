@@ -33,22 +33,39 @@ let extras = [
 ]
 
 let children_regexps : (string * Run.exp option) list = [
-  "doctype", None;
-  "text", None;
-  "pat_58fbb2e", None;
-  "pat_98d585a", None;
-  "implicit_end_tag", None;
-  "end_tag_name", None;
-  "attribute_name", None;
-  "semgrep_metavariable", None;
-  "comment", None;
-  "start_tag_name", None;
-  "pat_03aa317", None;
   "raw_text", None;
-  "erroneous_end_tag_name", None;
+  "doctype", None;
   "style_start_tag_name", None;
-  "attribute_value", None;
+  "pat_03aa317", None;
+  "pat_58fbb2e", None;
+  "text", None;
+  "erroneous_end_tag_name", None;
+  "attribute_name", None;
+  "pat_98d585a", None;
+  "semgrep_metavariable", None;
   "script_start_tag_name", None;
+  "end_tag_name", None;
+  "implicit_end_tag", None;
+  "start_tag_name", None;
+  "entity", None;
+  "attribute_value", None;
+  "doctype_",
+  Some (
+    Seq [
+      Token (Literal "<!");
+      Token (Name "doctype");
+      Token (Name "pat_03aa317");
+      Token (Literal ">");
+    ];
+  );
+  "erroneous_end_tag",
+  Some (
+    Seq [
+      Token (Literal "</");
+      Token (Name "erroneous_end_tag_name");
+      Token (Literal ">");
+    ];
+  );
   "quoted_attribute_value",
   Some (
     Alt [|
@@ -73,23 +90,6 @@ let children_regexps : (string * Run.exp option) list = [
     Seq [
       Token (Literal "</");
       Token (Name "semgrep_metavariable");
-      Token (Literal ">");
-    ];
-  );
-  "doctype_",
-  Some (
-    Seq [
-      Token (Literal "<!");
-      Token (Name "doctype");
-      Token (Name "pat_03aa317");
-      Token (Literal ">");
-    ];
-  );
-  "erroneous_end_tag",
-  Some (
-    Seq [
-      Token (Literal "</");
-      Token (Name "erroneous_end_tag_name");
       Token (Literal ">");
     ];
   );
@@ -141,6 +141,16 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Literal ">");
     ];
   );
+  "xmldoctype",
+  Some (
+    Seq [
+      Token (Literal "<?xml");
+      Repeat (
+        Token (Name "attribute");
+      );
+      Token (Literal "?>");
+    ];
+  );
   "self_closing_tag",
   Some (
     Seq [
@@ -150,17 +160,6 @@ let children_regexps : (string * Run.exp option) list = [
         Token (Name "attribute");
       );
       Token (Literal "/>");
-    ];
-  );
-  "script_start_tag",
-  Some (
-    Seq [
-      Token (Literal "<");
-      Token (Name "script_start_tag_name");
-      Repeat (
-        Token (Name "attribute");
-      );
-      Token (Literal ">");
     ];
   );
   "style_start_tag",
@@ -174,14 +173,15 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Literal ">");
     ];
   );
-  "xmldoctype",
+  "script_start_tag",
   Some (
     Seq [
-      Token (Literal "<?xml");
+      Token (Literal "<");
+      Token (Name "script_start_tag_name");
       Repeat (
         Token (Name "attribute");
       );
-      Token (Literal "?>");
+      Token (Literal ">");
     ];
   );
   "start_tag",
@@ -198,20 +198,20 @@ let children_regexps : (string * Run.exp option) list = [
       ];
     |];
   );
-  "script_element",
+  "style_element",
   Some (
     Seq [
-      Token (Name "script_start_tag");
+      Token (Name "style_start_tag");
       Opt (
         Token (Name "raw_text");
       );
       Token (Name "end_tag");
     ];
   );
-  "style_element",
+  "script_element",
   Some (
     Seq [
-      Token (Name "style_start_tag");
+      Token (Name "script_start_tag");
       Opt (
         Token (Name "raw_text");
       );
@@ -238,6 +238,7 @@ let children_regexps : (string * Run.exp option) list = [
   Some (
     Alt [|
       Token (Name "doctype_");
+      Token (Name "entity");
       Token (Name "text");
       Token (Name "element");
       Token (Name "script_element");
@@ -256,7 +257,7 @@ let children_regexps : (string * Run.exp option) list = [
       Token (Name "xmldoctype");
     |];
   );
-  "fragment",
+  "document",
   Some (
     Alt [|
       Repeat (
@@ -267,67 +268,12 @@ let children_regexps : (string * Run.exp option) list = [
   );
 ]
 
-let trans_doctype ((kind, body) : mt) : CST.doctype =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_text ((kind, body) : mt) : CST.text =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_pat_58fbb2e ((kind, body) : mt) : CST.pat_58fbb2e =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_pat_98d585a ((kind, body) : mt) : CST.pat_98d585a =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_implicit_end_tag ((kind, body) : mt) : CST.implicit_end_tag =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_end_tag_name ((kind, body) : mt) : CST.end_tag_name =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_attribute_name ((kind, body) : mt) : CST.attribute_name =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_semgrep_metavariable ((kind, body) : mt) : CST.semgrep_metavariable =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_comment ((kind, body) : mt) : CST.comment =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_start_tag_name ((kind, body) : mt) : CST.start_tag_name =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
-let trans_pat_03aa317 ((kind, body) : mt) : CST.pat_03aa317 =
-  match body with
-  | Leaf v -> v
-  | Children _ -> assert false
-
 let trans_raw_text ((kind, body) : mt) : CST.raw_text =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
 
-let trans_erroneous_end_tag_name ((kind, body) : mt) : CST.erroneous_end_tag_name =
+let trans_doctype ((kind, body) : mt) : CST.doctype =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
@@ -337,7 +283,38 @@ let trans_style_start_tag_name ((kind, body) : mt) : CST.style_start_tag_name =
   | Leaf v -> v
   | Children _ -> assert false
 
-let trans_attribute_value ((kind, body) : mt) : CST.attribute_value =
+let trans_pat_03aa317 ((kind, body) : mt) : CST.pat_03aa317 =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_pat_58fbb2e ((kind, body) : mt) : CST.pat_58fbb2e =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_text ((kind, body) : mt) : CST.text =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_erroneous_end_tag_name ((kind, body) : mt) : CST.erroneous_end_tag_name =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_attribute_name ((kind, body) : mt) : CST.attribute_name =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+
+let trans_pat_98d585a ((kind, body) : mt) : CST.pat_98d585a =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_semgrep_metavariable ((kind, body) : mt) : CST.semgrep_metavariable =
   match body with
   | Leaf v -> v
   | Children _ -> assert false
@@ -346,6 +323,60 @@ let trans_script_start_tag_name ((kind, body) : mt) : CST.script_start_tag_name 
   match body with
   | Leaf v -> v
   | Children _ -> assert false
+
+let trans_end_tag_name ((kind, body) : mt) : CST.end_tag_name =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_implicit_end_tag ((kind, body) : mt) : CST.implicit_end_tag =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_start_tag_name ((kind, body) : mt) : CST.start_tag_name =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_entity ((kind, body) : mt) : CST.entity =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_attribute_value ((kind, body) : mt) : CST.attribute_value =
+  match body with
+  | Leaf v -> v
+  | Children _ -> assert false
+
+let trans_doctype_ ((kind, body) : mt) : CST.doctype_ =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2; v3] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_doctype (Run.matcher_token v1),
+            trans_pat_03aa317 (Run.matcher_token v2),
+            Run.trans_token (Run.matcher_token v3)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
+let trans_erroneous_end_tag ((kind, body) : mt) : CST.erroneous_end_tag =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            trans_erroneous_end_tag_name (Run.matcher_token v1),
+            Run.trans_token (Run.matcher_token v2)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
 
 let trans_quoted_attribute_value ((kind, body) : mt) : CST.quoted_attribute_value =
   match body with
@@ -393,35 +424,6 @@ let trans_semgrep_end_tag ((kind, body) : mt) : CST.semgrep_end_tag =
           (
             Run.trans_token (Run.matcher_token v0),
             trans_semgrep_metavariable (Run.matcher_token v1),
-            Run.trans_token (Run.matcher_token v2)
-          )
-      | _ -> assert false
-      )
-  | Leaf _ -> assert false
-
-let trans_doctype_ ((kind, body) : mt) : CST.doctype_ =
-  match body with
-  | Children v ->
-      (match v with
-      | Seq [v0; v1; v2; v3] ->
-          (
-            Run.trans_token (Run.matcher_token v0),
-            trans_doctype (Run.matcher_token v1),
-            trans_pat_03aa317 (Run.matcher_token v2),
-            Run.trans_token (Run.matcher_token v3)
-          )
-      | _ -> assert false
-      )
-  | Leaf _ -> assert false
-
-let trans_erroneous_end_tag ((kind, body) : mt) : CST.erroneous_end_tag =
-  match body with
-  | Children v ->
-      (match v with
-      | Seq [v0; v1; v2] ->
-          (
-            Run.trans_token (Run.matcher_token v0),
-            trans_erroneous_end_tag_name (Run.matcher_token v1),
             Run.trans_token (Run.matcher_token v2)
           )
       | _ -> assert false
@@ -528,6 +530,23 @@ let trans_semgrep_start_tag ((kind, body) : mt) : CST.semgrep_start_tag =
       )
   | Leaf _ -> assert false
 
+let trans_xmldoctype ((kind, body) : mt) : CST.xmldoctype =
+  match body with
+  | Children v ->
+      (match v with
+      | Seq [v0; v1; v2] ->
+          (
+            Run.trans_token (Run.matcher_token v0),
+            Run.repeat
+              (fun v -> trans_attribute (Run.matcher_token v))
+              v1
+            ,
+            Run.trans_token (Run.matcher_token v2)
+          )
+      | _ -> assert false
+      )
+  | Leaf _ -> assert false
+
 let trans_self_closing_tag ((kind, body) : mt) : CST.self_closing_tag =
   match body with
   | Children v ->
@@ -536,24 +555,6 @@ let trans_self_closing_tag ((kind, body) : mt) : CST.self_closing_tag =
           (
             Run.trans_token (Run.matcher_token v0),
             trans_start_tag_name (Run.matcher_token v1),
-            Run.repeat
-              (fun v -> trans_attribute (Run.matcher_token v))
-              v2
-            ,
-            Run.trans_token (Run.matcher_token v3)
-          )
-      | _ -> assert false
-      )
-  | Leaf _ -> assert false
-
-let trans_script_start_tag ((kind, body) : mt) : CST.script_start_tag =
-  match body with
-  | Children v ->
-      (match v with
-      | Seq [v0; v1; v2; v3] ->
-          (
-            Run.trans_token (Run.matcher_token v0),
-            trans_script_start_tag_name (Run.matcher_token v1),
             Run.repeat
               (fun v -> trans_attribute (Run.matcher_token v))
               v2
@@ -582,18 +583,19 @@ let trans_style_start_tag ((kind, body) : mt) : CST.style_start_tag =
       )
   | Leaf _ -> assert false
 
-let trans_xmldoctype ((kind, body) : mt) : CST.xmldoctype =
+let trans_script_start_tag ((kind, body) : mt) : CST.script_start_tag =
   match body with
   | Children v ->
       (match v with
-      | Seq [v0; v1; v2] ->
+      | Seq [v0; v1; v2; v3] ->
           (
             Run.trans_token (Run.matcher_token v0),
+            trans_script_start_tag_name (Run.matcher_token v1),
             Run.repeat
               (fun v -> trans_attribute (Run.matcher_token v))
-              v1
+              v2
             ,
-            Run.trans_token (Run.matcher_token v2)
+            Run.trans_token (Run.matcher_token v3)
           )
       | _ -> assert false
       )
@@ -627,13 +629,13 @@ let trans_start_tag ((kind, body) : mt) : CST.start_tag =
       )
   | Leaf _ -> assert false
 
-let trans_script_element ((kind, body) : mt) : CST.script_element =
+let trans_style_element ((kind, body) : mt) : CST.style_element =
   match body with
   | Children v ->
       (match v with
       | Seq [v0; v1; v2] ->
           (
-            trans_script_start_tag (Run.matcher_token v0),
+            trans_style_start_tag (Run.matcher_token v0),
             Run.opt
               (fun v -> trans_raw_text (Run.matcher_token v))
               v1
@@ -644,13 +646,13 @@ let trans_script_element ((kind, body) : mt) : CST.script_element =
       )
   | Leaf _ -> assert false
 
-let trans_style_element ((kind, body) : mt) : CST.style_element =
+let trans_script_element ((kind, body) : mt) : CST.script_element =
   match body with
   | Children v ->
       (match v with
       | Seq [v0; v1; v2] ->
           (
-            trans_style_start_tag (Run.matcher_token v0),
+            trans_script_start_tag (Run.matcher_token v0),
             Run.opt
               (fun v -> trans_raw_text (Run.matcher_token v))
               v1
@@ -707,22 +709,26 @@ and trans_node ((kind, body) : mt) : CST.node =
             trans_doctype_ (Run.matcher_token v)
           )
       | Alt (1, v) ->
+          `Entity (
+            trans_entity (Run.matcher_token v)
+          )
+      | Alt (2, v) ->
           `Text (
             trans_text (Run.matcher_token v)
           )
-      | Alt (2, v) ->
+      | Alt (3, v) ->
           `Elem (
             trans_element (Run.matcher_token v)
           )
-      | Alt (3, v) ->
+      | Alt (4, v) ->
           `Script_elem (
             trans_script_element (Run.matcher_token v)
           )
-      | Alt (4, v) ->
+      | Alt (5, v) ->
           `Style_elem (
             trans_style_element (Run.matcher_token v)
           )
-      | Alt (5, v) ->
+      | Alt (6, v) ->
           `Errons_end_tag (
             trans_erroneous_end_tag (Run.matcher_token v)
           )
@@ -762,7 +768,7 @@ let trans_toplevel_node ((kind, body) : mt) : CST.toplevel_node =
       )
   | Leaf _ -> assert false
 
-let trans_fragment ((kind, body) : mt) : CST.fragment =
+let trans_document ((kind, body) : mt) : CST.document =
   match body with
   | Children v ->
       (match v with
@@ -780,49 +786,14 @@ let trans_fragment ((kind, body) : mt) : CST.fragment =
       )
   | Leaf _ -> assert false
 
-(*
-   Costly operation that translates a whole tree or subtree.
-
-   The first pass translates it into a generic tree structure suitable
-   to guess which node corresponds to each grammar rule.
-   The second pass is a translation into a typed tree where each grammar
-   node has its own type.
-
-   This function is called:
-   - once on the root of the program after removing extras
-     (comments and other nodes that occur anywhere independently from
-     the grammar);
-   - once of each extra node, resulting in its own independent tree of type
-     'extra'.
-*)
-let translate_tree src node trans_x =
-  let matched_tree = Run.match_tree children_regexps src node in
-  Option.map trans_x matched_tree
-
-
-let translate_extra src (node : Tree_sitter_output_t.node) : CST.extra option =
-  match node.type_ with
-  | "comment" ->
-      (match translate_tree src node trans_comment with
-      | None -> None
-      | Some x -> Some (`Comment (Run.get_loc node, x)))
-  | _ -> None
-
-let translate_root src root_node =
-  translate_tree src root_node trans_fragment
-
 let parse_input_tree input_tree =
   let orig_root_node = Tree_sitter_parsing.root input_tree in
   let src = Tree_sitter_parsing.src input_tree in
   let errors = Run.extract_errors src orig_root_node in
-  let opt_program, extras =
-     Run.translate
-       ~extras
-       ~translate_root:(translate_root src)
-       ~translate_extra:(translate_extra src)
-       orig_root_node
-  in
-  Parsing_result.create src opt_program extras errors
+  let root_node = Run.remove_extras ~extras orig_root_node in
+  let matched_tree = Run.match_tree children_regexps src root_node in
+  let opt_program = Option.map trans_document matched_tree in
+  Parsing_result.create src opt_program errors
 
 let string ?src_file contents =
   let input_tree = parse_source_string ?src_file contents in
