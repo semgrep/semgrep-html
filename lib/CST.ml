@@ -189,3 +189,7 @@ type xmldoctype (* inlined *) = (
   * attribute list (* zero or more *)
   * Token.t (* "?>" *)
 )
+
+type extra = [ `Comment of Loc.t * comment ]
+
+type extras = extra list
