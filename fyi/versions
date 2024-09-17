@@ -21,12 +21,16 @@ Last change in file:
       build: update bindings
 ---
 File: semgrep-grammars/src/semgrep-html/grammar.js
-Git repo name: ocaml-tree-sitter-semgrep2
-Latest commit in repo: d9b9d0ff4d7b2658609f433f5d0356a884f16230
+Git repo name: ocaml-tree-sitter-semgrep
+Latest commit in repo: ba53bc79be9cbc4200eb4aae23fcbadaff09d824
 Last change in file:
-  commit dfcab602dec77331482611c7b6fa54498cd7e4ee
-  Author: Martin Jambon <martin@mjambon.com>
-  Date:   Mon Sep 16 13:15:14 2024 -0700
+  commit 73bf69829157592bb38781ef9dc47001a7eee117
+  Author: Martin Jambon <martin@r2c.dev>
+  Date:   Mon Sep 16 16:57:03 2024 -0700
   
-      Update HTML parser
+      Update HTML parser (#509)
+      
+      * Update HTML parser
+      
+      * Fix the release script so as to delete files that we no longer release
 ---
